@@ -2,6 +2,7 @@
 layout: post
 title: 用Sublime Text运行Scala脚本
 date: 2016-12-26 17:11:45 +08:00
+author: "izumo"
 tags: 
     - Scala
     - Scala Script
