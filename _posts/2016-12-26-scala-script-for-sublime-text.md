@@ -41,7 +41,8 @@ Sublime Text是Windows平台上少有的默认支持Scala语法高亮的文本�
     {
       "shell_cmd": "scalas \"$file\"",
       "file_regex": "^(...*?):([0-9]*):?([0-9]*)",
-      "selector": "source.scala"
+      "selector": "source.scala",
+      "encoding": "gbk"
     }
 
 `scalas`对应之前的`scalas.bat`。
