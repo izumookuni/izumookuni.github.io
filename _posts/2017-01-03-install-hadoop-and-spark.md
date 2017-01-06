@@ -1,7 +1,6 @@
 ---
 layout: post
 title: 安装Hadoop、Spark单机版
-permalink: new-page.html
 date: 2017-01-03 17:30:33 +08:00
 author: "izumo"
 tags: 
