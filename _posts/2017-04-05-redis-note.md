@@ -2,7 +2,7 @@
 layout: post
 title: Redis笔记
 date: 2017-04-05 11:59:56 +08:00
-author: "<Your Name Here>"
+author: "izumo"
 tags:
     - Redis
     - NoSql
