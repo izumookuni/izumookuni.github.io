@@ -37,7 +37,7 @@ Redis支持的数据类型：
 
 + 集合（Set）
 
-+有序集合（Sorted Set）
++ 有序集合（Sorted Set）
 
 ### 字符串
 
@@ -50,7 +50,7 @@ Redis支持的数据类型：
     KEYS <pattern> # 获得符合规则的key名列表
     TYPE key # 获得key值的数据类型
 
-> Redis不支持嵌套，可以使用`user:1:friends`作为key名。
+> Redis不支持嵌套，可以使用 `user:1:friends` 作为key名。
 
 如果value是整型字符串：
 
@@ -204,3 +204,7 @@ Redis支持RDB、AOF两种方式的持久化。
 #### AOF
 
 需要开启AOF持久化，使得每次Redis每执行一次命令就写一次磁盘，只适合对数据读取速度不要求的场合。
+
+---
+
+本文大部分内容参考自《Redis入门指南（第2版）》
