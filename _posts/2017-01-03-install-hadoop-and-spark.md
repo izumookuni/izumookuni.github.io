@@ -136,7 +136,8 @@ tags:
 ### 配置conf/spark-env.sh
     export JAVA_HOME=/usr/local/jdk1.8.0_101
     export SCALA_HOME=/usr/local/scala-2.11.8
-    export SPARK_MASTER_IP=localhost
+    export SPARK_MASTER_HOST=<host_ip>
+    export SPARK_MASTER_PORT=7077
     export SPARK_WORKER_MEMORY=1G
 
 ### 启动spark
@@ -146,3 +147,5 @@ tags:
     bin/run-example SparkPi
 
 > Spark Web地址：http://localhost :8080
+> Spark Master端口：spark://<host_ip>:7077
+
