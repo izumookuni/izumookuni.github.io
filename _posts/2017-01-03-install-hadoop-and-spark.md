@@ -146,7 +146,7 @@ tags:
 ### 检测spark是否安装成功
     bin/run-example SparkPi
 
-> Spark Web地址：http://localhost :8080
+> Spark Web地址：http://host_ip:8080
 
-> Spark Master端口：spark://<host_ip>:7077
+> Spark Master端口：spark://host_ip:7077
 
