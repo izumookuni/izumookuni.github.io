@@ -41,7 +41,7 @@ tags:
       def wrap(data: A): Wrapper[A]
     }
 
-接下来在`Wrapper`伴生对象内创建扩展类：
+接下来在`Wrapper`对象内创建扩展类：
 
     object Wrapper {
     
@@ -63,7 +63,7 @@ tags:
     
     }
 
-然后在需要扩展类的地方导入`Wrapper`类的全部内容：
+然后在需要扩展类的地方导入`Wrapper`对象的全部内容：
 
     import Wrapper._
 
@@ -75,7 +75,7 @@ tags:
     println(s.repeat) // abcabc
     println(i.add(4)) // 7
 
-我们还可以给泛型类添加扩展。在`Wrapper`伴生对象内添加`DoubleListWrapper`类和`VectorWrapper`类：
+我们还可以给泛型类添加扩展。在`Wrapper`对象内添加`DoubleListWrapper`类和`VectorWrapper`类：
 
     // 扩展List[Double]
     implicit class DoubleListWrapper(val it: List[Double]) extends Wrapper[List[Double]] {
