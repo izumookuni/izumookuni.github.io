@@ -11,7 +11,50 @@ tags:
 
 ## Future
 
+    Future[T] {
+      => T
+    }
+
+用`Future[T].foreach(f: (T) => Unit)`设定结果正确返回之后要执行的操作；用`Future[T].failed.foreach(f: (T) => Unit)`设定结果返回失败时要执行的操作。
+
+## Try
+
+    Try[T] {
+      => T
+    }
+
+`Try[T]`或者返回正确的值` Success[T]`，或者返回失败`Failure[Throwable]`
+
+    a match {
+      case Success(i) => println(i)
+      case Failure(e) => println(e.getMessage)
+    }
+
+同理，用`Try[T].foreach(f: (T) => Unit)`设定结果正确返回之后要执行的操作；用`Try[T].failed.foreach(f: (T) => Unit)`设定结果返回失败时要执行的操作。
+
 ## Promise
+
+    val t = Promise[T] // 设置一个空的Promise[T]对象
+    // 以下两个操作只能执行一次，否则抛出异常
+    p.success[T](f: => T) // 完善Promise[T]对象
+    p.failure(t: => Throwable) // 完善Promise[T]对象，但是令其返回失败
+    // 以下两个操作可以执行任意次，但只有第一次可以执行成功
+    p.trySuccess[T](f: => T): Boolean // 尝试完善Promise[T]对象，返回是否执行成功
+    p.tryFailure(t: => Throwable) // 尝试完善Promise[T]对象，但是令其返回失败，返回是否执行成功
+
+使用`p.future`返回Future[T]对象，之后的操作同Future。
+    
+## Scala Async
+
+    compile group: 'org.scala-lang.modules', name: 'scala-async_2.12', version: '0.9.7'
+
+`async`用于开启一个新线程，相当于Future[T].apply(f:  => T)；`await`用于在线程内等待一个`Future[T]`的返回值T，不会阻塞基础线程（因为是在新线程内等待）。
+
+    async {
+      // do something
+      await { // Future[T] }
+      // do something
+    }
 
 ## 数据并行集合
 
