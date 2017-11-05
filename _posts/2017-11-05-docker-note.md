@@ -8,7 +8,7 @@ tags:
     - Linux
 ---
 
->> 本文章目前为未完成状态，随时会加入新内容。
+> 本文章目前为未完成状态，随时会加入新内容。
 
 ## Docker命令
 
@@ -32,7 +32,7 @@ tags:
 
     docker run -it
 
-依赖其它容器（容器名:容器内部别名）
+依赖其它容器（容器名:容器内部别名）（查看[跨容器依赖](#krqyl)）
 
     docker run --link xxx:yyy
 
@@ -46,7 +46,7 @@ tags:
 
 为容器添加环境变量
 
-    docker run -e e1=aaa -e e2= bbb
+    docker run -e e1=aaa -e e2=bbb
 
 为容器添加挂载点（内部路径 或 主机路径:内部路径）（查看[存储卷](#ccj)）
 
@@ -180,7 +180,7 @@ docker top xxx
 
 查看容器元数据（大括号内为查询表达式，类似jQuery）
 
-    docker inspect --format "{{json .State.Running}}" xxx
+    docker inspect --format "\{\{json .State.Running\}\}" xxx
 
 ### port
 
@@ -304,7 +304,81 @@ docker top xxx
     docker run --name aaa //被连接的容器
     docker run --net container:aaa --name bbb 
 
+两个容器共享它们开放的端口。适合容器想要互相通信，但不想赋予对方对自己资源的直接访问权的情况。
+
 ### Open容器
 
     docker run --net host
+
+无任何网络隔离，容器对主机网络有完全的访问权，不建议使用。
+
+<span id="krqyl"></span>
+
+### 跨容器依赖
+
+将新容器和另外一个容器相链接
+
+    docker run --link aaa:aab bbb
+
+1. aaa为被链接容器，bbb为新容器，aab为容器aaa在容器bbb内的别名（映射为容器aaa的ip）；
+2. 如果跨容器通信被禁止，Docker会添加特定的防火墙规则来允许被链接容器间的通信；
+3. 链接是单向的，即容器aaa没有容器bbb的链接信息；
+4. 链接不具有传递性，即链接了容器bbb的容器ccc没有容器aaa的链接信息。
+
+## 隔离与资源分配
+
+### 内存
+
+限制容器中进程能够使用的内存大小（单位可用b、k、m、g）
+
+    docker run --memory 256m
+
+### CPU
+
+指定容器的**相对**权重（数值），只有在CPU时间上存在竞争时才会起作用
+
+    docker run --cpu-shares 1024
+
+限制容器只能在指定的CPU核集合中执行，以减少上下文切换
+
+    docker run --cpuset-cpus 0
+    docker run --cpuset-cpus 0, 1, 2
+    docker run --cpuset-cpus 0-2
+
+### 设备
+
+挂载设备至容器（摄像头，光驱等）（主机路径:容器内路径）
+
+    docker run --device /dev/video0:/dev/video0
+
+### 共享内存
+
+跨进程通信（IPC），容器bbb可以访问容器aaa相同的内存位置
+
+    docker --ipc container:aaa bbb
+
+### 开放内存
+
+将容器和主机运行在同一个命名空间（一般情况下不推荐使用）
+
+    docker run --ipc host
+
+### 指定用户（run-as）
+
+指定容器使用的用户
+
+    docker -u uname
+    docker -u uid:gid
+
+1. uname必须在容器内存在
+2. uid、gid在容器内可以不存在
+3. 容器内的uname和主机中的同名uname具有相同的权限（主要影响卷`-v`）。除非想要主机的文件能够被容器访问，否则不要将文件以卷的形式挂载到容器上。
+
+### 特权容器
+
+    docker run --privileged
+
+
+
+
 
