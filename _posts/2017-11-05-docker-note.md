@@ -28,7 +28,7 @@ tags:
 
     docker run --name xxx
 
-交互式容器，`-i`保持标准输入对容器开放，`-t`为容器分配虚拟终端（使用`Ctrl+P`和`Q`分离终端）。
+交互式容器，`-i`保持标准输入对容器开放，`-t`为容器分配虚拟终端（使用`Ctrl+P`和`Ctrl+Q`分离终端）。
 
     docker run -it
 
@@ -187,6 +187,47 @@ docker top xxx
 查看容器端口映射
 
     docker port xxx
+
+### commit
+
+提交新镜像（由已存在容器生成新镜像）（查看[手动构建镜像](#sdgjxjx)）
+
+    docker commit [-a "@author" -m "message"] src_container new_image
+
+## diff
+
+查看文件系统的改动（查看[手动构建镜像](#sdgjxjx)）
+
+    docker diff xxx
+
+## tag
+
+为镜像添加标签（默认的标签为`latest`）（镜像名称可以不同）
+
+    docker tag aaa:tag1 aaa:tag2
+    docker tag aaa:tag1 bbb:tag2
+    docker tag aaa:tag1 aaa[:latest]
+
+## cp
+
+主机与容器间文件的复制（将主机路径替换为`-`，可以将文件输出到终端）
+
+    docker cp /file/in/host container_name:/file/in/container
+    docker cp container_name:/file/in/container /file/in/host
+
+## export
+
+将扁平的文件系统的所有内容导出到标准输出或一个压缩文件上（查看[AUFS](#aufs)）
+
+    docker export -o yyy.tar xxx
+    docker export xxx 
+
+## import
+
+将压缩文件的内容导入到一个新镜像中（新镜像只有一层）（查看[AUFS](#aufs)）
+
+        docker import [-c "<Dockerfile instruction>"] yyy.tar xxx
+        docker import [-c "<Dockerfile instruction>"] - xxx < yyy.tar
 
 <span id="ccj"></span>
 
@@ -377,6 +418,53 @@ docker top xxx
 ### 特权容器
 
     docker run --privileged
+
+<span id="sdgjxjx"></span>
+
+## 手动构建镜像
+
+创建新镜像（默认的标签为`latest`）
+
+    docker commit [-a "@author" -m "message"] src_container new_image[:tag]
+
+以下内容会被记录进新镜像：
+
++ 所有的环境变量
++ 工作目录
++ 开放端口集合
++ 所有卷的定义
++ 容器入口点
++ 命令和参数
+
+查看文件系统的改动（A：添加，C：修改，D：删除）
+
+    docker diff xxx
+
+<span id="aufs"></span>
+
+## AUFS（文件系统）
+
++ AUFS由多个层组成。每当对AUFS改动一次，改动会被记录到一个新的层中，这个新层放置于所有层的最上面。容器（和用户）访问文件系统所看到的，就是所有这些层的“联合”，或者说是自上而下的观察角度。
++ 当你从AUFS读取一个文件时，系统会从存在该文件的、最上面的一层中读取。如果文件没有在最顶层被创建或改动，那么读取操作就会沿着层不断向下找，知道找到这个文件的层。
++ 使用`diff`命令可以查看容器文件相对于源镜像的改动情况。
++ 使用`commit`命令会在源镜像层结构的基础上再添加一层（在使用`commit`命令之前所进行的所有操作，都只算作一层）
++ Dockerfile的每一次RUN操作，都会添加一层。（因此可以将多个RUN合成一个RUN以减少镜像的层数）
++ AUFS具有层数限制，一般为42
++ 可以通过导出镜像，再导入镜像来获得扁平镜像，减小镜像的大小。但**不推荐**，因为会丢失改动的历史信息，更好的做法是创建分支。
+
+### 导出和导入扁平文件系统
+
+将扁平的文件系统的所有内容导出到标准输出或一个压缩文件上
+
+    docker export -o yyy.tar xxx
+    docker export xxx 
+
+将压缩文件的内容导入到一个新镜像中（新镜像只有一层）
+
+        docker import [-c "<Dockerfile instruction>"] yyy.tar xxx
+        docker import [-c "<Dockerfile instruction>"] - xxx < yyy.tar
+
+## Dockerfile
 
 
 
