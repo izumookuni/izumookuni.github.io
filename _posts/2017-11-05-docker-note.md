@@ -60,7 +60,7 @@ tags:
 
 设定容器入口（相当于 `cat command`）
 
-    docker run --entrypoint=“cat” xxx command
+    docker run --entrypoint="cat" xxx command
 
 容器退出后自动删除
 
@@ -180,7 +180,11 @@ docker top xxx
 
 查看容器元数据（大括号内为查询表达式，类似jQuery）
 
-    docker inspect --format "\{\{json .State.Running\}\}" xxx
+{% raw %}
+
+    docker inspect --format "{{json .State.Running}}" xxx
+
+{% endraw %}
 
 ### port
 
@@ -194,13 +198,13 @@ docker top xxx
 
     docker commit [-a "@author" -m "message"] src_container new_image
 
-## diff
+### diff
 
 查看文件系统的改动（查看[手动构建镜像](#sdgjxjx)）
 
     docker diff xxx
 
-## tag
+### tag
 
 为镜像添加标签（默认的标签为`latest`）（镜像名称可以不同）
 
@@ -208,26 +212,37 @@ docker top xxx
     docker tag aaa:tag1 bbb:tag2
     docker tag aaa:tag1 aaa[:latest]
 
-## cp
+### cp
 
 主机与容器间文件的复制（将主机路径替换为`-`，可以将文件输出到终端）
 
     docker cp /file/in/host container_name:/file/in/container
     docker cp container_name:/file/in/container /file/in/host
 
-## export
+### export
 
 将扁平的文件系统的所有内容导出到标准输出或一个压缩文件上（查看[AUFS](#aufs)）
 
     docker export -o yyy.tar xxx
     docker export xxx 
 
-## import
+### import
 
 将压缩文件的内容导入到一个新镜像中（新镜像只有一层）（查看[AUFS](#aufs)）
 
         docker import [-c "<Dockerfile instruction>"] yyy.tar xxx
         docker import [-c "<Dockerfile instruction>"] - xxx < yyy.tar
+
+### build
+
+从Dockerfile生成镜像（文件名默认为`Dockerfile`）（使用`-f`可以设置Dockerfile文件的名字）（查看[Dockerfile](#dockerfile)）
+
+    docker build -t xxx[:tag] /path/to/dockerfile
+    docker build -t xxx[:tag] -f dockerfilename.df /path/to/dockerfile
+
+不使用缓存
+
+    docker build --no-cache
 
 <span id="ccj"></span>
 
@@ -338,7 +353,8 @@ docker top xxx
 
 6. 设置想要开放的端口，一般和`-P`命令配合使用，常用于`-P`选项没有开放想要的端口的情况：
 
-        docker run --export 1111 -P
+        docker run --expose 1111-1115
+        docker run --expose 1111 -P
 
 ### Joined容器
 
@@ -447,9 +463,9 @@ docker top xxx
 + AUFS由多个层组成。每当对AUFS改动一次，改动会被记录到一个新的层中，这个新层放置于所有层的最上面。容器（和用户）访问文件系统所看到的，就是所有这些层的“联合”，或者说是自上而下的观察角度。
 + 当你从AUFS读取一个文件时，系统会从存在该文件的、最上面的一层中读取。如果文件没有在最顶层被创建或改动，那么读取操作就会沿着层不断向下找，知道找到这个文件的层。
 + 使用`diff`命令可以查看容器文件相对于源镜像的改动情况。
-+ 使用`commit`命令会在源镜像层结构的基础上再添加一层（在使用`commit`命令之前所进行的所有操作，都只算作一层）
-+ Dockerfile的每一次RUN操作，都会添加一层。（因此可以将多个RUN合成一个RUN以减少镜像的层数）
-+ AUFS具有层数限制，一般为42
++ 使用`commit`命令会在源镜像层结构的基础上再添加一层（在使用`commit`命令之前所进行的所有操作，都只算作一层）。
++ Dockerfile的每一次RUN操作，都会添加一层（因此可以将多个RUN合成一个RUN以减少镜像的层数）。
++ AUFS具有层数限制，一般为42。
 + 可以通过导出镜像，再导入镜像来获得扁平镜像，减小镜像的大小。但**不推荐**，因为会丢失改动的历史信息，更好的做法是创建分支。
 
 ### 导出和导入扁平文件系统
@@ -461,12 +477,141 @@ docker top xxx
 
 将压缩文件的内容导入到一个新镜像中（新镜像只有一层）
 
-        docker import [-c "<Dockerfile instruction>"] yyy.tar xxx
-        docker import [-c "<Dockerfile instruction>"] - xxx < yyy.tar
+    docker import [-c "<Dockerfile instruction>"] yyy.tar xxx
+    docker import [-c "<Dockerfile instruction>"] - xxx < yyy.tar 
+
+<span id="dockerfile"></span>
 
 ## Dockerfile
 
+几乎所有的Dockerfile命令都会使镜像添加一层，因此同一个类型的命令应尽可能的少出现。
 
+### FROM
 
+设置基础镜像（一般情况下，所有的Dockerfile均以`FROM`开始）
+
+    FROM ubuntu:latest
+
+### MAINTAINER
+
+设置镜像维护者的名字和邮箱
+
+    MAINTAINER user name here "username@email.com"
+
+### RUN
+
+运行命令（每个`RUN`命令都会使文件系统增加一层）
+
+    RUN apt install -y git
+    RUN apt purge git
+
+优化方法
+
+    RUN apt install -y git && apt purge git
+
+### ENTRYPOINT
+
+容器入口（等同于`--entrypoint`）
+
+    ENTRYPOINT ["git"]
+
++ 一般Dockerfile只有一个`ENTRYPOINT`,如果设置多个，只执行最后一个
++ `ENTRYPOINT`命令有两种格式：shell格式和exec格式
+- shell格式类似于shell命令，其中的参数以空格为边界。如：`ENTRYPOINT exec ./mailer.sh`，相当于`/bin/sh -c 'exec ./mailer.sh'`。
+- exec格式是一个字符串数组，其中第一个字符串是要执行的命令，剩余的字符串是参数。如：`ENTRYPOINT ["ls", "-l"]`。
++ 使用shell格式时，`CMD`命令的所有参数以及`docker run`指定的额外参数将会被忽略。
+
+### CMD
+
+设置默认命令，在生成容器时执行（构建镜像时不执行）
+
++ 如果执行`docker run xxx`时没有提供命令，则默认执行`CMD`命令
++ 一般和`ENTRYPOINT`配合使用，此时`ENTRYPOINT`保留命令，`CMD`保留参数。如`ENTRYPOINT ["/bin/bash"]`，以下
+
+    CMD ["echo", "hello world"]
+    CMD "echo" "hello world"
+
+### ENV
+
+为容器添加环境变量（相当于`docker run -e`）
+
+    ENV APPPORT="/app" \
+        APP="mailer.sh" \
+        VERSION="0.6"
+
++ 添加的环境变量对Dockerfile文件本身也有效
++ 每个`ENV`命令都会使文件系统增加一层
++ 可以使用多个`ENV`，但这样会创建更多的层
+
+### ADD
+
+从主机复制文件到容器
+
+    ADD ["/path/to/dir/in/host" "/path/to/dir/in/container"]
+
++ 数组最后一个元素为容器目录，之前的元素为主机目录
++ 复制到容器的文件和文件夹权限为755，uid和gid为0（即root）
++ 如果文件为压缩格式（tar、gzip、bzip2等），则docker会自动解压缩（URL下载不能使用解压缩特性，会直接复制压缩包）
++ 主机文件必须在`docker build <PATH>`的`<PATH>`下
++ 要复制的主机文件和容器的目的文件名字不同时，将文件改名
++ 容器的目的为路径时（以`/`结尾），将主机文件复制到容器的指定路径下
++ 由于`ADD`命令会造成**歧义**（不知道需不需要解压缩），因此大多数情况下应使用`COPY`命令替代
+
+### COPY
+
+从主机复制文件到容器
+
+    COPY ["/path/to/dir/in/host/1", "/path/to/dir/in/host/2", "/path/to/dir/in/container"]
+
++ 数组最后一个元素为容器目录，之前的元素为主机目录
++ 不会执行解压缩
++ 支持shell模式和exec模式，但如果参数包含空格，则必须使用exec模式（上面的例子即为exec模式）
+
+### LABEL
+
+定义键值对，这些键值对被记录为镜像或者容器的额外元数据（相当于`docker run --label`）（此处使用了`ENV`命令添加的环境变量）
+
+    LABEL base.name="App Name" \
+          base.version="${VERSION}"
+
+### WORKDIR
+
+设置容器的工作路径（等同于`docker run -w`），对`RUN`、`CMD`、`ENTRYPOINT`命令生效
+
+    WORKDIR /path/to/workdir
+
+### USER
+
+设置用户（等同于`docker run -u`），对接下来的Dockerfile命令生效
+
+    USER uname[:gname]
+    USER uid[:gid]
+
+### EXPOSE
+
+设置对外开放端口（等同于`docker run --expose`）
+
+    EXPOSE 80 8080
+
++ 执行`docker run -P`命令，会将`EXPOSE`命令列出的所有端口开放
++ 不能使用端口范围作为参数，如：2000-3000
+
+### VOLUME
+
+添加挂载点（等同于`docker run -v`）
+
+    VOLUME ["/var/log", "/var/www/html"]
+
++ 无法创建只读卷（即`:ro`）
++ 无法创建绑定-挂载卷（即`/path/to/dir/in/host:/path/to/dir/in/container`）
+
+### ONBUILD
+
+    ONBUILD COPY [".", "/var/myapp"]
+    ONBUILD RUN ls -l /var/myapp
+
++ 如果生成的镜像被作为另一个构建的基础镜像，则`ONBUILD`命令定义了需要被执行的命令
++ 这些命令不会在包含它们的Dockerfile被构建时被执行
++ `ONBUILD`命令不具有传递性，即镜像A的`ONBUILD`可以被基于镜像A的镜像B执行，但不会被基于镜像B的镜像C执行
 
 
